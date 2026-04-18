@@ -132,4 +132,52 @@ public class AuthService : IAuthService
             return ServiceResult.Failure("An error occurred while deleting the user.");
         }
     }
+
+    public async Task<ServiceResult> UpdateProfileAsync(int userId, ProfileViewModel model)
+    {
+        var user = await _context.Users.FindAsync(userId);
+        if (user == null) return ServiceResult.Failure("User not found.");
+
+        var isTaken = await _context.Users.AnyAsync(u => u.Id != userId && 
+            (u.UserName.ToLower() == model.UserName.Trim().ToLower() || 
+             u.Email.ToLower() == model.Email.Trim().ToLower()));
+
+        if (isTaken) return ServiceResult.Failure("Username or Email already exists.");
+
+        user.UserName = model.UserName.Trim();
+        user.Email = model.Email.Trim().ToLower();
+
+        if (!string.IsNullOrWhiteSpace(model.NewPassword))
+        {
+            user.Password = BCrypt.Net.BCrypt.HashPassword(model.NewPassword);
+        }
+
+        try
+        {
+            await _context.SaveChangesAsync();
+            return ServiceResult.Ok();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating profile for user {UserId}", userId);
+            return ServiceResult.Failure("An error occurred while saving changes.");
+        }
+    }
+
+    public async Task<ServiceResult<object>> GetUserDataAsync(int userId)
+    {
+        var user = await _context.Users.FindAsync(userId);
+        if (user == null) return ServiceResult<object>.Failure("User not found.");
+
+        var data = new
+        {
+            user.Id,
+            user.UserName,
+            user.Email,
+            Role = user.Role.ToString(),
+            ExportDate = DateTime.UtcNow
+        };
+
+        return ServiceResult<object>.Ok(data);
+    }
 }

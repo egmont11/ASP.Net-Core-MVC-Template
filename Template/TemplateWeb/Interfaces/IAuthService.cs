@@ -10,4 +10,6 @@ public interface IAuthService
     Task<ServiceResult<UserModel>> RegisterAsync(AuthRegisterViewModel model);
     Task LogoutAsync();
     Task<ServiceResult> DeleteUserAsync(UserModel user);
+    Task<ServiceResult> UpdateProfileAsync(int userId, ProfileViewModel model);
+    Task<ServiceResult<object>> GetUserDataAsync(int userId);
 }
