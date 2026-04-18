@@ -1,0 +1,43 @@
+﻿@model AuthLoginViewModel
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <h1 class="card-title text-center mb-4">Login</h1>
+
+                <form asp-action="Login">
+                    @Html.AntiForgeryToken()
+                    
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="EmailOrUsername"></label>
+                        <input asp-for="EmailOrUsername" class="form-control" placeholder="Email or Username"/>
+                        <span asp-validation-for="EmailOrUsername" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Password"></label>
+                        <input asp-for="Password" class="form-control" placeholder="Password"/>
+                        <span asp-validation-for="Password" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="RememberMe"></label>
+                        <input asp-for="RememberMe" class="form-check-input"/>
+                    </div>
+
+                    <input asp-for="ReturnUrl" type="hidden"/>
+                    <div class="d-grid">
+                        <input type="submit" value="Login" class="btn btn-primary"/>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}
