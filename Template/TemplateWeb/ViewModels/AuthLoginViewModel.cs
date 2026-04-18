@@ -10,7 +10,7 @@ public class AuthLoginViewModel
     
     [Display(Name = "Password")]
     [DataType(DataType.Password)]
-    [Required] [MinLength(5)]
+    [Required] [MinLength(4)]
     public string Password { get; set; }
 
     [Display(Name = "Remember me?")]

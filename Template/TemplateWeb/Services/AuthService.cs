@@ -31,8 +31,8 @@ public class AuthService : IAuthService
         var trimmed = emailOrUsername.Trim().ToLower();
         
         var user = await _context.Users.SingleOrDefaultAsync(u => 
-            u.Email.Equals(trimmed, StringComparison.CurrentCultureIgnoreCase) || 
-            u.UserName.Equals(trimmed, StringComparison.CurrentCultureIgnoreCase));
+            string.Equals(u.Email, trimmed) || 
+            string.Equals(u.UserName, trimmed));
 
         return user == null ? ServiceResult<UserModel>.Failure("User not found.") : ServiceResult<UserModel>.Ok(user);
     }
@@ -77,8 +77,8 @@ public class AuthService : IAuthService
         var emailTrimmed = viewModel.Email.Trim().ToLower();
 
         var existingUser = await _context.Users.AnyAsync(u => 
-            u.UserName.Equals(userNameTrimmed, StringComparison.CurrentCultureIgnoreCase) ||
-            u.Email.Equals(emailTrimmed, StringComparison.CurrentCultureIgnoreCase));
+            string.Equals(u.UserName, userNameTrimmed) ||
+            string.Equals(u.Email, emailTrimmed));
 
         if (existingUser)
         {

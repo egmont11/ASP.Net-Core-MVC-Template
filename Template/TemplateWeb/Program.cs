@@ -14,8 +14,9 @@ public class Program
         DotEnv.Load();
         var builder = WebApplication.CreateBuilder(args);
 
-        // gets the connection string from .env
-        var connectionString = builder.Configuration["DEFAULT_CONNECTION"] ?? throw new InvalidOperationException("Connection string 'DEFAULT_CONNECTION' not found.");
+        // gets the connection string from configuration
+        var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
+                               ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
         
         builder.Services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(connectionString));
@@ -36,6 +37,19 @@ public class Program
         
         var app = builder.Build();
 
+        // Apply migrations on startup
+        using (var scope = app.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            if (db.Database.GetPendingMigrations().Any())
+            {
+                db.Database.Migrate();
+            }
+            
+            // Seed the initial admin user
+            DataSeeder.SeedAdminUser(db).GetAwaiter().GetResult();
+        }
+
         // Configure the HTTP request pipeline.
         if (!app.Environment.IsDevelopment())
         {
@@ -48,6 +62,10 @@ public class Program
         app.UseAuthorization();
 
         app.MapStaticAssets();
+        app.MapControllerRoute(
+            name: "areas",
+            pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
+            
         app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}")

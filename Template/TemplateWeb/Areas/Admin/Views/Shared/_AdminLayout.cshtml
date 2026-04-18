@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>@ViewData["Title"] - Admin Panel</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true"/>
+    <style>
+        body { display: flex; min-height: 100vh; flex-direction: column; }
+        .wrapper { display: flex; flex: 1; }
+        #sidebar { min-width: 250px; max-width: 250px; background: #343a40; color: #fff; transition: all 0.3s; }
+        #sidebar .sidebar-header { padding: 20px; background: #3c444b; }
+        #sidebar ul.components { padding: 20px 0; border-bottom: 1px solid #47748b; }
+        #sidebar ul p { color: #fff; padding: 10px; }
+        #sidebar ul li a { padding: 10px; font-size: 1.1em; display: block; color: #fff; text-decoration: none; }
+        #sidebar ul li a:hover { color: #343a40; background: #fff; }
+        #content { width: 100%; padding: 20px; }
+    </style>
+</head>
+<body>
+<header>
+    <nav class="navbar navbar-expand-sm navbar-dark bg-dark border-bottom box-shadow">
+        <div class="container-fluid">
+            <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">TemplateWeb <small class="text-muted">Admin</small></a>
+            <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                <ul class="navbar-nav flex-grow-1">
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link text-light" asp-area="" asp-controller="Home" asp-action="Index">Back to Site</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+</header>
+
+<div class="wrapper">
+    <!-- Sidebar -->
+    <nav id="sidebar">
+        <div class="sidebar-header">
+            <h3>Admin Panel</h3>
+        </div>
+
+        <ul class="list-unstyled components">
+            <li class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Dashboard" ? "active" : "")">
+                <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index">Dashboard</a>
+            </li>
+            <li class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Users" ? "active" : "")">
+                <a asp-area="Admin" asp-controller="Users" asp-action="Index">Users</a>
+            </li>
+            <!-- Add more models here easily -->
+        </ul>
+    </nav>
+
+    <!-- Page Content -->
+    <div id="content">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+</div>
+
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
