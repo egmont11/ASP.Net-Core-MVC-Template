@@ -1,27 +1,33 @@
-using Microsoft.EntityFrameworkCore;
-using TemplateWeb.Models.DbModels;
+using Microsoft.AspNetCore.Identity;
+using TemplateWeb.Entities;
 
 namespace TemplateWeb.Data;
 
 public static class DataSeeder
 {
-    public static async Task SeedAdminUser(AppDbContext context)
+    public static async Task SeedAsync(UserManager<UserEntity> userManager, RoleManager<IdentityRole> roleManager)
     {
-        // Only run if no users exist
-        if (await context.Users.AnyAsync())
+        // Ensure roles exist
+        foreach (var role in new[] { "Admin", "User" })
         {
-            return;
+            if (!await roleManager.RoleExistsAsync(role))
+                await roleManager.CreateAsync(new IdentityRole(role));
         }
 
-        var admin = new UserModel
+        // Seed initial admin user if none exists
+        if (!userManager.Users.Any())
         {
-            UserName = "admin",
-            Email = "admin@template.com",
-            Password = BCrypt.Net.BCrypt.HashPassword("Admin123!"), // You should change this on first login
-            Role = UserRole.Admin
-        };
+            var admin = new UserEntity
+            {
+                UserName = "admin",
+                Email = "admin@template.com",
+                EmailConfirmed = true,
+            };
 
-        await context.Users.AddAsync(admin);
-        await context.SaveChangesAsync();
+            // You should change this password on first login
+            var result = await userManager.CreateAsync(admin, "Admin123!");
+            if (result.Succeeded)
+                await userManager.AddToRoleAsync(admin, "Admin");
+        }
     }
 }

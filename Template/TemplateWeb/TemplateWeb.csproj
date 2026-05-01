@@ -8,8 +8,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="BCrypt.Net-Next" Version="4.1.0" />
       <PackageReference Include="dotenv.net" Version="4.0.2" />
+      <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.6" />
       <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.6">
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

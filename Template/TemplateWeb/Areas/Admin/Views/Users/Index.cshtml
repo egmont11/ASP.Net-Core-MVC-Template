@@ -1,4 +1,4 @@
-@model IEnumerable<UserModel>
+@model IEnumerable<UserWithRolesViewModel>
 @{
     ViewData["Title"] = "User Management";
 }
@@ -13,20 +13,25 @@
             <th>ID</th>
             <th>Username</th>
             <th>Email</th>
-            <th>Role</th>
+            <th>Roles</th>
             <th>Actions</th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var user in Model)
+        @foreach (var vm in Model)
         {
             <tr>
-                <td>@user.Id</td>
-                <td>@user.UserName</td>
-                <td>@user.Email</td>
-                <td><span class="badge @(user.Role == UserRole.Admin ? "bg-danger" : "bg-info")">@user.Role</span></td>
+                <td>@vm.UserEntity.Id</td>
+                <td>@vm.UserEntity.UserName</td>
+                <td>@vm.UserEntity.Email</td>
                 <td>
-                    <a asp-action="Details" asp-route-id="@user.Id" class="btn btn-sm btn-outline-primary">Details</a>
+                    @foreach (var role in vm.Roles)
+                    {
+                        <span class="badge @(role == "Admin" ? "bg-danger" : "bg-info")">@role</span>
+                    }
+                </td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@vm.UserEntity.Id" class="btn btn-sm btn-outline-primary">Details</a>
                 </td>
             </tr>
         }

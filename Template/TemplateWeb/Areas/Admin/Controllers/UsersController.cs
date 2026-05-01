@@ -1,28 +1,37 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using TemplateWeb.Data;
+using TemplateWeb.Entities;
+using TemplateWeb.Models;
 
 namespace TemplateWeb.Areas.Admin.Controllers;
 
 public class UsersController : AdminBaseController
 {
-    private readonly AppDbContext _context;
+    private readonly UserManager<UserEntity> _userManager;
 
-    public UsersController(AppDbContext context)
+    public UsersController(UserManager<UserEntity> userManager)
     {
-        _context = context;
+        _userManager = userManager;
     }
 
     public async Task<IActionResult> Index()
     {
-        var users = await _context.Users.ToListAsync();
-        return View(users);
+        var users = _userManager.Users.ToList();
+        var viewModels = new List<UserWithRolesViewModel>();
+        foreach (var user in users)
+        {
+            var roles = await _userManager.GetRolesAsync(user);
+            viewModels.Add(new UserWithRolesViewModel { UserEntity = user, Roles = roles });
+        }
+        return View(viewModels);
     }
 
-    public async Task<IActionResult> Details(int id)
+    public async Task<IActionResult> Details(string id)
     {
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
+        var user = await _userManager.FindByIdAsync(id);
         if (user == null) return NotFound();
-        return View(user);
+
+        var roles = await _userManager.GetRolesAsync(user);
+        return View(new UserWithRolesViewModel { UserEntity = user, Roles = roles });
     }
 }

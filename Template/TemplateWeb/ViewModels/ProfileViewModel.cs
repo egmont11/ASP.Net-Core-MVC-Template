@@ -15,8 +15,11 @@ public class ProfileViewModel
     public string Email { get; set; } = string.Empty;
 
     [DataType(DataType.Password)]
+    [Display(Name = "Current Password")]
+    public string? CurrentPassword { get; set; }
+
+    [DataType(DataType.Password)]
     [Display(Name = "New Password (leave blank to keep current)")]
-    [MinLength(5)]
     public string? NewPassword { get; set; }
 
     [DataType(DataType.Password)]

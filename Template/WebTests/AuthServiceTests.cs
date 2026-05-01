@@ -1,115 +1,97 @@
-using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using Moq;
+using Microsoft.Extensions.DependencyInjection;
 using TemplateWeb.Data;
-using TemplateWeb.Models;
-using TemplateWeb.Models.DbModels;
-using TemplateWeb.Services;
+using TemplateWeb.Entities;
 
 namespace WebTests;
 
 [TestClass]
 public class AuthServiceTests
 {
-    private AppDbContext _context = null!;
-    private Mock<ILogger<AuthService>> _loggerMock = null!;
-    private Mock<IHttpContextAccessor> _httpContextAccessorMock = null!;
-    private AuthService _authService = null!;
+    private ServiceProvider _serviceProvider = null!;
+    private UserManager<UserEntity> _userManager = null!;
 
     [TestInitialize]
     public void Initialize()
     {
-        var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
-            .Options;
-        _context = new AppDbContext(options);
-        _loggerMock = new Mock<ILogger<AuthService>>();
-        _httpContextAccessorMock = new Mock<IHttpContextAccessor>();
-        _authService = new AuthService(_context, _loggerMock.Object, _httpContextAccessorMock.Object);
+        var services = new ServiceCollection();
+
+        services.AddLogging();
+
+        services.AddDbContext<AppDbContext>(options =>
+            options.UseInMemoryDatabase(Guid.NewGuid().ToString()));
+
+        services.AddIdentity<UserEntity, IdentityRole>()
+            .AddEntityFrameworkStores<AppDbContext>()
+            .AddDefaultTokenProviders();
+
+        _serviceProvider = services.BuildServiceProvider();
+        _userManager = _serviceProvider.GetRequiredService<UserManager<UserEntity>>();
     }
 
     [TestCleanup]
     public void Cleanup()
     {
-        _context.Database.EnsureDeleted();
-        _context.Dispose();
+        _serviceProvider.Dispose();
     }
 
     [TestMethod]
-    public async Task RegisterAsync_ShouldReturnSuccess_WhenUserIsNew()
+    public async Task CreateAsync_ShouldReturnSuccess_WhenUserIsNew()
     {
         // Arrange
-        var model = new AuthRegisterViewModel
-        {
-            UserName = "testuser",
-            Email = "test@example.com",
-            Password = "password123",
-            ConfirmPassword = "password123"
-        };
+        var user = new UserEntity { UserName = "testuser", Email = "test@example.com" };
 
         // Act
-        var result = await _authService.RegisterAsync(model);
+        var result = await _userManager.CreateAsync(user, "Password123!");
 
         // Assert
-        Assert.IsTrue(result.Success);
-        Assert.IsNotNull(result.Data);
-        Assert.AreEqual("testuser", result.Data.UserName);
-        Assert.AreEqual("test@example.com", result.Data.Email);
-        
-        var userInDb = await _context.Users.FirstOrDefaultAsync(u => u.UserName == "testuser");
+        Assert.IsTrue(result.Succeeded);
+
+        var userInDb = await _userManager.FindByNameAsync("testuser");
         Assert.IsNotNull(userInDb);
+        Assert.AreEqual("test@example.com", userInDb.Email);
     }
 
     [TestMethod]
-    public async Task RegisterAsync_ShouldReturnFailure_WhenUserAlreadyExists()
+    public async Task CreateAsync_ShouldReturnFailure_WhenUsernameAlreadyExists()
     {
         // Arrange
-        var existingUser = new UserModel { UserName = "existing", Email = "existing@example.com", Password = "hashedpassword" };
-        _context.Users.Add(existingUser);
-        await _context.SaveChangesAsync();
+        var existing = new UserEntity { UserName = "existing", Email = "existing@example.com" };
+        await _userManager.CreateAsync(existing, "Password123!");
 
-        var model = new AuthRegisterViewModel
-        {
-            UserName = "existing",
-            Email = "new@example.com",
-            Password = "password123",
-            ConfirmPassword = "password123"
-        };
+        var duplicate = new UserEntity { UserName = "existing", Email = "other@example.com" };
 
         // Act
-        var result = await _authService.RegisterAsync(model);
+        var result = await _userManager.CreateAsync(duplicate, "Password123!");
 
         // Assert
-        Assert.IsFalse(result.Success);
-        Assert.AreEqual("Username or Email already exists.", result.Message);
+        Assert.IsFalse(result.Succeeded);
+        Assert.IsTrue(result.Errors.Any(e => e.Code == "DuplicateUserName"));
     }
 
     [TestMethod]
-    public async Task FindUserByEmailOrUsernameAsync_ShouldReturnUser_WhenUsernameMatches()
+    public async Task FindByNameAsync_ShouldReturnUser_CaseInsensitive()
     {
         // Arrange
-        var user = new UserModel { UserName = "testuser", Email = "test@example.com", Password = "password" };
-        _context.Users.Add(user);
-        await _context.SaveChangesAsync();
+        var user = new UserEntity { UserName = "testuser", Email = "test@example.com" };
+        await _userManager.CreateAsync(user, "Password123!");
 
-        // Act
-        var result = await _authService.FindUserByEmailOrUsernameAsync("TESTUSER");
+        // Act — Identity normalizes usernames, so lookup is always case-insensitive
+        var found = await _userManager.FindByNameAsync("TESTUSER");
 
         // Assert
-        Assert.IsTrue(result.Success);
-        Assert.IsNotNull(result.Data);
-        Assert.AreEqual("testuser", result.Data.UserName);
+        Assert.IsNotNull(found);
+        Assert.AreEqual("testuser", found.UserName);
     }
 
     [TestMethod]
-    public async Task FindUserByEmailOrUsernameAsync_ShouldReturnFailure_WhenUserNotFound()
+    public async Task FindByNameAsync_ShouldReturnNull_WhenUserNotFound()
     {
         // Act
-        var result = await _authService.FindUserByEmailOrUsernameAsync("nonexistent");
+        var result = await _userManager.FindByNameAsync("nonexistent");
 
         // Assert
-        Assert.IsFalse(result.Success);
-        Assert.AreEqual("User not found.", result.Message);
+        Assert.IsNull(result);
     }
 }
