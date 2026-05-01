@@ -1,12 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [[ $# -ne 1 ]]; then
-  echo "Usage: $0 <NewProjectName>"
-  exit 1
-fi
-
-NEW_NAME="$1"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$SCRIPT_DIR/Template"
 
@@ -15,7 +9,20 @@ if [[ ! -d "$ROOT" ]]; then
   exit 1
 fi
 
-echo "Renaming 'Template' -> '$NEW_NAME' in: $ROOT"
+echo "========================================="
+echo "  MVC Template - Project Rename Tool"
+echo "========================================="
+echo ""
+read -rp "Enter new project name: " NEW_NAME
+
+if [[ -z "$NEW_NAME" ]]; then
+  echo "Error: Project name cannot be empty."
+  exit 1
+fi
+
+echo ""
+echo "Renaming 'Template' -> '$NEW_NAME'..."
+echo ""
 
 # Rename files first (deepest first to avoid path issues)
 while IFS= read -r -d '' path; do
@@ -47,4 +54,5 @@ done < <(find "$ROOT" \
   -not -path "*/.idea/*" \
   -type d -name "*Template*" -print0 | sort -rz)
 
-echo "Done."
+echo ""
+echo "Done! Project renamed to '$NEW_NAME'."
